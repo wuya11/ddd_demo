@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- status:log4j内部console日志级别,monitorInterval:自动更新配置(单位:秒) -->
+<Configuration status="error" monitorInterval="3600">
+    <Properties>
+        <Property name="baseDir">/wwwlogs/javalogs/mirservice-study</Property>
+    </Properties>
+    <Appenders>
+        <RollingRandomAccessFile name="stdFile"
+                                 filePattern="${baseDir}/std/stdLog-%d{yyyy-MM-dd}.log">
+            <!--<TimeBasedTriggeringPolicy interval="1" modulate="true"/>-->
+            <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+            <DirectWriteRolloverStrategy/>
+            <PatternLayout
+                    pattern="%c{1} %d{yyyy-MM-dd HH:mm:ss SSS} [%t] %T %-5p - %X %m%n"/>
+        </RollingRandomAccessFile>
+        <!-- layout中不要使用定位信息,影响性能,特使是异步logger -->
+        <!-- 错误日志文件,数量小采用SizeBased策略 -->
+        <RollingRandomAccessFile name="errorFile"
+                                 filePattern="${baseDir}/error/errorLog-%d{yyyy-MM-dd}.log">
+            <!-- 只记录错误日志,包括系统使用非ErrorLogger类输出的日志 -->
+            <ThresholdFilter level="warn" onMatch="ACCEPT"
+                             onMismatch="DENY"/>
+            <!-- 每天一个日志文件 -->
+            <!--<TimeBasedTriggeringPolicy interval="1" modulate="true"/>-->
+            <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+            <DirectWriteRolloverStrategy/>
+            <JSONLayout compact="true" eventEol="true" properties="true">
+                <KeyValuePair key="timeFormat" value="$${date:yyyy-MM-dd HH:mm:ss SSS}"/>
+            </JSONLayout>
+        </RollingRandomAccessFile>
+        <!-- 业务日志文件,数量大,采用timeBased策略 -->
+        <RollingRandomAccessFile name="appFile"
+                                 filePattern="${baseDir}/app/appLog-%d{yyyy-MM-dd}.log">
+            <!-- 1天一个日志文件 -->
+            <!--<TimeBasedTriggeringPolicy interval="1" modulate="true"/>-->
+            <CronTriggeringPolicy schedule="0 0 0 * * ?"/>
+            <DirectWriteRolloverStrategy/>
+            <PatternLayout
+                    pattern="%c{1} %d{yyyy-MM-dd HH:mm:ss SSS} [%t] %T %-5p - %X %m%n"/>
+        </RollingRandomAccessFile>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="stdFile"/>
+            <AppenderRef ref="errorFile"/>
+        </Root>
+        <!-- 错误日志,子logger不追加root日志内容 -->
+        <AsyncLogger name="errorLogger" level="error" additivity="false">
+            <AppenderRef ref="errorFile"/>
+        </AsyncLogger>
+        <!-- 业务日志 -->
+        <AsyncLogger name="appLogger" level="info" additivity="false">
+            <AppenderRef ref="appFile"/>
+        </AsyncLogger>
+
+
+    </Loggers>
+</Configuration>
